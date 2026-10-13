@@ -2,16 +2,18 @@
    Finoir — home hero for Jellyfin 12.2 (web client, Modern layout)
    https://github.com/not-alpha/jellyfin-finoir
 
-   Shows a rotating banner at the top of the home page with the newest films
-   and shows that have a backdrop, a logo and a synopsis. Styling lives in
-   css/theme.css (section 10); without that CSS this script shows nothing
-   useful.
+   Shows a rotating banner at the top of the home page. If the library has a
+   collection or playlist called "Featured", its films and shows are used;
+   otherwise the newest ones. Only items with a backdrop, a logo and a
+   synopsis are shown. Styling lives in css/theme.css (section 10); without
+   that CSS this script shows nothing useful.
 
    Load it with the JavaScript Injector plugin. Rollback: switch the script
    off in the plugin and reload the page.
 
-   What it asks the server for: one item list per page load, then one logo per
-   slide and one backdrop for the current and the next slide.
+   What it asks the server for: two small item lists per page load (the
+   "Featured" lookup and the slides), then one logo per slide and one backdrop
+   for the current and the next slide.
    ========================================================================== */
 (function () {
   'use strict';
@@ -25,7 +27,11 @@
   var SLIDE_COUNT = 6;          /* slides shown */
   var POOL_SIZE = 40;           /* newest items looked at to find them */
   var INTERVAL_MS = 9000;       /* time per slide */
-  var LABEL = 'Just added';     /* line under the logo */
+  var LABEL = 'Just added';     /* line under the logo for the newest items */
+  var FEATURED_NAME = 'Featured';   /* collection or playlist to use; '' = off */
+  var FEATURED_LABEL = 'Featured';  /* line under the logo for those items */
+  var FIELDS = 'Overview,Genres,CommunityRating,CriticRating,OfficialRating,' +
+    'ProductionYear,ChildCount,RunTimeTicks';
 
   var itemsPromise = null;
   var mounting = false;
@@ -58,35 +64,82 @@
     return (hours ? hours + 'h ' : '') + (minutes % 60) + 'm';
   }
 
+  function usable(item) {
+    return (item.Type === 'Movie' || item.Type === 'Series') &&
+      item.BackdropImageTags && item.BackdropImageTags.length &&
+      item.ImageTags && item.ImageTags.Logo && item.Overview;
+  }
+
+  function loadNewest(api, userId) {
+    return api.getItems(userId, {
+      IncludeItemTypes: 'Movie,Series',
+      Recursive: true,
+      SortBy: 'DateCreated',
+      SortOrder: 'Descending',
+      Limit: POOL_SIZE,
+      Fields: FIELDS,
+      EnableImageTypes: 'Backdrop,Logo',
+      ImageTypeLimit: 1
+    }).then(function (result) {
+      return { label: LABEL, items: (result.Items || []).filter(usable).slice(0, SLIDE_COUNT) };
+    });
+  }
+
+  /* Resolves to null when there is no usable "Featured" collection or playlist */
+  function loadFeatured(api, userId) {
+    if (!FEATURED_NAME) {
+      return Promise.resolve(null);
+    }
+    return api.getItems(userId, {
+      IncludeItemTypes: 'BoxSet,Playlist',
+      Recursive: true,
+      SearchTerm: FEATURED_NAME,
+      Limit: 20
+    }).then(function (result) {
+      var list = (result.Items || []).filter(function (item) {
+        return (item.Name || '').toLowerCase() === FEATURED_NAME.toLowerCase();
+      })[0];
+      if (!list) {
+        return null;
+      }
+      var query = { UserId: userId, Fields: FIELDS, EnableImageTypes: 'Backdrop,Logo', ImageTypeLimit: 1 };
+      var request;
+      if (list.Type === 'Playlist') {
+        request = api.getJSON(api.getUrl('Playlists/' + list.Id + '/Items', query));
+      } else {
+        query.ParentId = list.Id;
+        request = api.getItems(userId, query);
+      }
+      return request.then(function (children) {
+        var items = (children.Items || []).filter(usable).slice(0, SLIDE_COUNT);
+        return items.length ? { label: FEATURED_LABEL, items: items } : null;
+      });
+    }).catch(function () {
+      return null;
+    });
+  }
+
   function loadItems() {
     if (!itemsPromise) {
       var api = window.ApiClient;
-      itemsPromise = api.getItems(api.getCurrentUserId(), {
-        IncludeItemTypes: 'Movie,Series',
-        Recursive: true,
-        SortBy: 'DateCreated',
-        SortOrder: 'Descending',
-        Limit: POOL_SIZE,
-        Fields: 'Overview,Genres,CommunityRating,OfficialRating,ProductionYear,ChildCount,RunTimeTicks',
-        EnableImageTypes: 'Backdrop,Logo',
-        ImageTypeLimit: 1
-      }).then(function (result) {
-        return (result.Items || []).filter(function (item) {
-          return item.BackdropImageTags && item.BackdropImageTags.length &&
-            item.ImageTags && item.ImageTags.Logo && item.Overview;
-        }).slice(0, SLIDE_COUNT);
+      var userId = api.getCurrentUserId();
+      itemsPromise = loadFeatured(api, userId).then(function (featured) {
+        return featured || loadNewest(api, userId);
       }).catch(function () {
         itemsPromise = null;
-        return [];
+        return { label: LABEL, items: [] };
       });
     }
     return itemsPromise;
   }
 
-  function slideHtml(item, index) {
+  function slideHtml(item, index, label) {
     var facts = '';
     if (item.CommunityRating) {
       facts += '<span class="homeHero-score">&#9733; ' + item.CommunityRating.toFixed(1) + '</span>';
+    }
+    if (item.CriticRating || item.CriticRating === 0) {
+      facts += '<span class="homeHero-score">&#127813; ' + Math.round(item.CriticRating) + '%</span>';
     }
     if (item.OfficialRating) {
       facts += '<span class="homeHero-age">' + escapeHtml(item.OfficialRating) + '</span>';
@@ -105,7 +158,7 @@
       '<div class="homeHero-backdrop"></div>' +
       '<div class="homeHero-body">' +
       '<img class="homeHero-logo" alt="' + escapeHtml(item.Name) + '" src="' + imageUrl(item, 'Logo', 700) + '">' +
-      '<div class="homeHero-label">' + escapeHtml(LABEL) + '</div>' +
+      '<div class="homeHero-label">' + escapeHtml(label) + '</div>' +
       '<div class="homeHero-facts">' + facts + '</div>' +
       '<p class="homeHero-plot">' + escapeHtml(item.Overview) + '</p>' +
       '<div class="homeHero-actions">' +
@@ -143,14 +196,16 @@
     row.removeChild(card);
   }
 
-  function build(items, page) {
+  function build(items, page, label) {
     var hero = document.createElement('section');
     hero.id = 'homeHero';
     hero.className = 'homeHero';
     hero.setAttribute('aria-roledescription', 'carousel');
-    hero.setAttribute('aria-label', LABEL);
+    hero.setAttribute('aria-label', label);
 
-    var html = items.map(slideHtml).join('');
+    var html = items.map(function (item, index) {
+      return slideHtml(item, index, label);
+    }).join('');
     if (items.length > 1) {
       html += '<button type="button" class="homeHero-arrow homeHero-prev" aria-label="Previous">' +
         '<span class="material-icons chevron_left" aria-hidden="true"></span></button>' +
@@ -263,12 +318,12 @@
       return false;
     }
     mounting = true;
-    loadItems().then(function (items) {
+    loadItems().then(function (result) {
       mounting = false;
-      if (!items.length || !rows.isConnected || page.querySelector('#homeHero')) {
+      if (!result.items.length || !rows.isConnected || page.querySelector('#homeHero')) {
         return;
       }
-      rows.parentElement.insertBefore(build(items, page), rows);
+      rows.parentElement.insertBefore(build(result.items, page, result.label), rows);
     });
     return false;
   }

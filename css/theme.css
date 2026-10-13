@@ -1005,3 +1005,36 @@
 .MuiAppBar-root .MuiIconButton-root[aria-controls="app-remote-play-menu"] {
   display: none;
 }
+
+
+/* --------------------------------------------------------------------------
+   12. SCRIPT HELPERS — styles used by js/detail-page.js and
+   js/nav-current.js. Without those scripts none of these rules match.
+   -------------------------------------------------------------------------- */
+
+/* A title hidden from sight but still read out by screen readers */
+.finoir-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Play button label supplied by the script, e.g. "Play S1 E3" */
+@media (min-width: 64em) {
+  body:has(.backgroundContainer.withBackdrop) .itemDetailPage:has(.mainDetailButtons > .btnPlay:not(.hide)) .detailButton.btnPlay[data-finoir-label]::after {
+    content: attr(data-finoir-label);
+  }
+}
+
+/* The library you are in: an accent line under its link */
+.MuiAppBar-root .MuiToolbar-root .MuiButton-root.finoir-current {
+  box-shadow: inset 0 calc(-1 * var(--ring-width)) 0 var(--accent);
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
