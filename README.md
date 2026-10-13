@@ -30,7 +30,7 @@ scripts loaded through a plugin. No Jellyfin files are edited.
 - **Detail pages.** Full-width backdrop with logo, facts and a labelled Play
   button at the bottom left; the large poster is hidden. With the detail
   script: the season count on series pages, no repeated text title under a
-  logo, and a Play button that names the episode ("Play S1 E3").
+  logo, and a Play button that reads "Watch" and names the episode ("Watch S1 E3").
 - **Seasons.** Episodes shown as a grid of cards instead of a tall list.
 
 ## Install
@@ -52,7 +52,7 @@ small scripts. Each is independent; install only the ones you want.
 | Script | What it adds | Asks the server for |
 |---|---|---|
 | `js/home-hero.js` | The hero banner on the home page | Two small item lists per page load, one logo per slide, one backdrop for the current and next slide |
-| `js/detail-page.js` | Season count, logo-only titles, "Play S1 E3" label | The item's details once per page; the episode list on series pages |
+| `js/detail-page.js` | Season count, logo-only titles, "Watch S1 E3" label | The item's details once per page; the episode list on series pages |
 | `js/nav-current.js` | An accent line under the library you are in | Nothing |
 
 1. Install the **JavaScript Injector** plugin

@@ -1025,7 +1025,7 @@
   border: 0;
 }
 
-/* Play button label supplied by the script, e.g. "Play S1 E3" */
+/* Play button label supplied by the script, e.g. "Watch S1 E3" */
 @media (min-width: 64em) {
   body:has(.backgroundContainer.withBackdrop) .itemDetailPage:has(.mainDetailButtons > .btnPlay:not(.hide)) .detailButton.btnPlay[data-finoir-label]::after {
     content: attr(data-finoir-label);

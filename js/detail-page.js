@@ -6,8 +6,9 @@
    1. Series pages show the number of seasons in the facts line.
    2. When an item has a logo, the text title that repeats it is hidden
       (it stays in the page for screen readers).
-   3. On series pages the Play button names the episode it will start,
-      for example "Play S1 E3".
+   3. The Play button reads "Watch" (or "Resume" when there is a saved
+      position), and on series pages it names the episode it will start,
+      for example "Watch S1 E3".
 
    Each one can be switched off below. Styling lives in css/theme.css
    (section 12). Load this with the JavaScript Injector plugin; to remove it,
@@ -28,6 +29,8 @@
   var SHOW_SEASON_COUNT = true;
   var HIDE_TITLE_WITH_LOGO = true;
   var LABEL_NEXT_EPISODE = true;
+  var WATCH_WORD = 'Watch';     /* button text when starting from the beginning */
+  var RESUME_WORD = 'Resume';   /* button text when there is a saved position */
 
   var loaded = { id: null, promise: null };
 
@@ -122,11 +125,17 @@
 
     var play = page.querySelector('.mainDetailButtons .btnPlay');
     if (play) {
-      var next = data.next;
-      if (next && next.IndexNumber != null && !play.classList.contains('hide')) {
-        var code = (next.ParentIndexNumber != null ? 'S' + next.ParentIndexNumber + ' ' : '') +
-          'E' + next.IndexNumber;
-        play.setAttribute('data-finoir-label', (play.getAttribute('title') || 'Play') + ' ' + code);
+      if (LABEL_NEXT_EPISODE && !play.classList.contains('hide')) {
+        /* On a series the saved position that matters is the next episode's */
+        var target = item.Type === 'Series' ? data.next : item;
+        var resuming = !!(target && target.UserData && target.UserData.PlaybackPositionTicks);
+        var label = resuming ? RESUME_WORD : WATCH_WORD;
+        var next = data.next;
+        if (next && next.IndexNumber != null) {
+          label += ' ' + (next.ParentIndexNumber != null ? 'S' + next.ParentIndexNumber + ' ' : '') +
+            'E' + next.IndexNumber;
+        }
+        play.setAttribute('data-finoir-label', label);
       } else {
         play.removeAttribute('data-finoir-label');
       }
