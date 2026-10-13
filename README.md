@@ -3,6 +3,14 @@
 A dark, cinematic theme for the Jellyfin web client: a large hero banner that
 drops straight into rows of content, quiet colours, and calm motion.
 
+![Home page with the hero banner](screenshots/home-hero.jpg)
+
+| | |
+|---|---|
+| ![Detail page](screenshots/detail-page.jpg) | ![Episode cards on a season page](screenshots/episodes.jpg) |
+
+![A row of cards, one hovered](screenshots/cards.jpg)
+
 Built for **Jellyfin 12.2**, **Modern layout**, **Dark** theme. It uses only
 supported extension points: the Custom CSS box and three small optional
 scripts loaded through a plugin. No Jellyfin files are edited.
