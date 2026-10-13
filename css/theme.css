@@ -1,0 +1,1007 @@
+/* ==========================================================================
+   Finoir — a dark, cinematic theme for Jellyfin 12.2 (web client, Modern layout)
+   https://github.com/not-alpha/jellyfin-finoir
+   Paste into: Dashboard → Branding → Custom CSS code
+   Rollback:   clear that box and save.
+   Escape hatch per user: Settings → Display → Theme → anything other than
+   "Dark" switches the colours below off (they are scoped to the Dark theme).
+   ========================================================================== */
+
+
+/* --------------------------------------------------------------------------
+   1. TOKENS — every colour, size and timing is defined here, once.
+   Named by role, not by value. Change the look by editing this block only.
+   -------------------------------------------------------------------------- */
+:root {
+  /* Base */
+  --bg: #0B0B12;               /* page background */
+  --surface: #16161F;          /* dialogs, menus, raised panels */
+  --text: #F2F2F7;             /* main text */
+  --text-muted: #A0A0B0;       /* secondary text, labels */
+
+  /* Primary = buttons, progress bars, checkboxes */
+  --primary: #F2F2F7;
+  --primary-hover: #D8D8E0;
+  --on-primary: #0B0B12;       /* text/icons on top of primary */
+
+  /* Accent = focus ring, watched tick, active markers. Use sparingly. */
+  --accent: #8B6CFF;
+  --on-accent: #0B0B12;        /* text/icons on top of accent */
+
+  /* Same colours as "R G B" triplets. Jellyfin's dashboard needs this form
+     for its translucent states. CSS cannot derive them from the hex values,
+     so keep each one in sync with the colour named beside it. */
+  --bg-rgb: 11 11 18;          /* --bg */
+  --surface-rgb: 22 22 31;     /* --surface */
+  --text-rgb: 242 242 247;     /* --text */
+  --text-muted-rgb: 160 160 176; /* --text-muted */
+  --primary-rgb: 242 242 247;  /* --primary */
+  --primary-hover-rgb: 216 216 224; /* --primary-hover */
+  --on-primary-rgb: 11 11 18;  /* --on-primary */
+  --accent-rgb: 139 108 255;   /* --accent */
+  --on-accent-rgb: 11 11 18;   /* --on-accent */
+
+  /* Derived overlays (follow --text / --accent automatically) */
+  --divider: rgb(var(--text-rgb) / 0.12);
+  --hover-overlay: rgb(var(--text-rgb) / 0.08);
+  --focus-overlay: rgb(var(--accent-rgb) / 0.24);
+  --button-quiet: rgb(var(--text-rgb) / 0.10);        /* secondary buttons */
+  --button-quiet-hover: rgb(var(--text-rgb) / 0.18);
+
+  /* Shape, spacing, type, motion — used from step 3 onwards */
+  --radius-card: 8px;
+  --space-row: 40px;           /* gap between home rows */
+  --row-title-size: 20px;
+  --row-title-weight: 600;
+  --card-title-weight: 400;    /* Jellyfin's font only has 400 and 700 */
+  --card-title-stroke: 0.3px;  /* thickens card titles between the two; 0 = off */
+  --hover-lift: 1.03;          /* card scale on hover */
+  --card-edge: rgb(var(--text-rgb) / 0.1);   /* faint card border at rest */
+  --hover-ring: rgb(var(--text-rgb) / 0.8);  /* card border under the mouse */
+  --card-edge-width: 3px;      /* card border thickness */
+  --ring-width: 2px;           /* keyboard focus ring thickness */
+  --motion-fast: 150ms;
+  --motion-card: 260ms;        /* card lift and border fade */
+  --ease-card: cubic-bezier(0.2, 0, 0, 1);   /* quick start, soft landing */
+
+  /* Navigation bar */
+  --nav-size: 16px;            /* library labels */
+  --nav-weight: 600;
+  --nav-icon-size: 22px;       /* icon beside each label */
+  --nav-logo-size: 32px;
+  --nav-action-size: 24px;     /* icons on the right */
+  --nav-gap: 12px;            /* extra space between library links */
+}
+
+
+/* --------------------------------------------------------------------------
+   2. BASE COLOURS — map the tokens onto Jellyfin's own theme variables.
+   Jellyfin 12 generates --jf-palette-* under [data-theme="dark"]; the selector
+   below outranks that without !important. Nothing here targets a class name,
+   so it recolours the home, library, detail and user settings pages together.
+   The admin dashboard is not affected: Jellyfin removes custom CSS there.
+   -------------------------------------------------------------------------- */
+:root[data-theme="dark"] {
+  /* Backgrounds */
+  --jf-palette-background-default: var(--bg);
+  --jf-palette-background-defaultChannel: var(--bg-rgb);
+  --jf-palette-background-paper: var(--surface);
+  --jf-palette-background-paperChannel: var(--surface-rgb);
+  --jf-palette-AppBar-defaultBg: var(--bg);
+
+  /* Text */
+  --jf-palette-text-primary: var(--text);
+  --jf-palette-text-primaryChannel: var(--text-rgb);
+  --jf-palette-text-secondary: var(--text-muted);
+  --jf-palette-text-secondaryChannel: var(--text-muted-rgb);
+  --jf-palette-divider: var(--divider);
+
+  /* Primary: submit buttons, progress bars, checkboxes, count badges */
+  --jf-palette-primary-main: var(--primary);
+  --jf-palette-primary-mainChannel: var(--primary-rgb);
+  --jf-palette-primary-light: var(--primary);
+  --jf-palette-primary-lightChannel: var(--primary-rgb);
+  --jf-palette-primary-dark: var(--primary-hover);
+  --jf-palette-primary-darkChannel: var(--primary-hover-rgb);
+  --jf-palette-primary-contrastText: var(--on-primary);
+  --jf-palette-primary-contrastTextChannel: var(--on-primary-rgb);
+
+  /* Secondary: Jellyfin uses this for focus states (cards, inputs, tabs) */
+  --jf-palette-secondary-main: var(--accent);
+  --jf-palette-secondary-mainChannel: var(--accent-rgb);
+  --jf-palette-secondary-light: var(--accent);
+  --jf-palette-secondary-lightChannel: var(--accent-rgb);
+  --jf-palette-secondary-dark: var(--accent);
+  --jf-palette-secondary-darkChannel: var(--accent-rgb);
+  --jf-palette-secondary-contrastText: var(--on-accent);
+  --jf-palette-secondary-contrastTextChannel: var(--on-accent-rgb);
+
+  /* Interaction states */
+  --jf-palette-action-hover: var(--hover-overlay);
+  --jf-palette-action-focus: var(--focus-overlay);
+  --jf-palette-Button-inheritContainedBg: var(--button-quiet);
+  --jf-palette-Button-inheritContainedHoverBg: var(--button-quiet-hover);
+}
+
+
+/* --------------------------------------------------------------------------
+   3. HEADER AND NAVIGATION
+   The header is already transparent at the top of a page. Once the page is
+   scrolled Jellyfin swaps it to a raised grey bar; make that a flat bar in the
+   page colour with a hairline instead. No blur, no height change.
+   -------------------------------------------------------------------------- */
+:root[data-theme="dark"] {
+  --jf-palette-AppBar-darkBg: var(--bg);   /* header background when scrolled */
+}
+
+.MuiAppBar-root.MuiAppBar-positionFixed {
+  background-image: none;
+  box-shadow: none;
+}
+
+.MuiAppBar-root.MuiAppBar-colorDefault.MuiAppBar-positionFixed {
+  box-shadow: 0 1px 0 var(--divider);      /* hairline, only when scrolled */
+}
+
+/* User button: quiet circle instead of a solid primary-coloured one */
+.MuiAppBar-root .MuiAvatar-root {
+  background-color: var(--button-quiet);
+  color: var(--text);
+}
+
+/* Loading spinner and plain text links: hard-coded blue in Jellyfin */
+.mdl-spinner__layer-1,
+.mdl-spinner__layer-2,
+.mdl-spinner__layer-3,
+.mdl-spinner__layer-4 {
+  border-color: var(--primary);
+}
+
+.button-link {
+  color: var(--text);
+}
+
+
+/* --------------------------------------------------------------------------
+   4. ROWS — titles and spacing
+   Row titles apply everywhere a row of cards has a heading (home, detail
+   pages). The spacing rule is home only.
+   -------------------------------------------------------------------------- */
+.sectionTitle-cards {
+  font-size: var(--row-title-size);
+  font-weight: var(--row-title-weight);
+  color: var(--text);
+}
+
+/* Gap from one row's captions to the next row's title = --space-row.
+   Jellyfin's cards already carry 1.8em of bottom margin, so subtract it. */
+.homeSectionsContainer .sectionTitleContainer-cards {
+  padding-top: calc(var(--space-row) - 1.8em);
+}
+
+
+/* --------------------------------------------------------------------------
+   5. CARDS — shape, hover, focus, badges, play button
+   -------------------------------------------------------------------------- */
+:root[data-theme="dark"] {
+  --jf-card-borderRadius: var(--radius-card);   /* Jellyfin's own card radius */
+}
+
+/* Tiles without an image (e.g. people with no photo): surface, not blue */
+.defaultCardBackground1,
+.defaultCardBackground2,
+.defaultCardBackground3,
+.defaultCardBackground4,
+.defaultCardBackground5 {
+  background-color: var(--surface);
+}
+
+/* Card title in the main text colour, slightly thickened with a hairline
+   stroke; the second line stays muted */
+.cardText-first {
+  color: var(--text);
+  font-weight: var(--card-title-weight);
+  -webkit-text-stroke: var(--card-title-stroke) currentColor;
+}
+
+/* Card border, Disney+ style: a faint edge at rest that brightens under the
+   mouse, replacing Jellyfin's dark overlay with buttons. Drawn inside the card
+   edge so the row never clips it. While a card is being used from the keyboard
+   it keeps Jellyfin's overlay and buttons. */
+@media (hover: hover) {
+  /* Jellyfin clips each card at its own box (paint containment), which cut
+     the left edge of a lifted card. Keep layout and style containment only. */
+  .card.card-hoverable:not(.show-animation) {
+    contain: layout style;
+  }
+
+  .card-hoverable .cardScalable::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border: var(--card-edge-width) solid var(--card-edge);
+    border-radius: var(--radius-card);
+    pointer-events: none;
+    transition: border-color var(--motion-card) var(--ease-card);
+  }
+
+  .card-hoverable:hover .cardScalable::after {
+    border-color: var(--hover-ring);
+  }
+
+  .card-hoverable:not(:has(:focus-visible)) .cardOverlayContainer {
+    background: transparent;
+  }
+
+  /* Kept invisible for the mouse: the three small buttons everywhere, and the
+     play button on poster cards. Landscape cards (Continue Watching, Next Up)
+     keep it. Uses opacity, not visibility or display: Jellyfin animates every
+     property on these buttons, so visibility made them flash, and display
+     would take them out of keyboard reach. */
+  .card-hoverable:not(:has(:focus-visible)) .cardOverlayButton-br .cardOverlayButton-hover,
+  .card-hoverable:not(.overflowBackdropCard):not(:has(:focus-visible)) .cardOverlayFab-primary {
+    opacity: 0;
+    pointer-events: none;
+  }
+}
+
+/* Hover lift: mouse only, and off when the system asks for reduced motion */
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .card-hoverable .cardScalable {
+    transition: transform var(--motion-card) var(--ease-card);
+  }
+
+  .card-hoverable:hover .cardScalable {
+    transform: scale(var(--hover-lift));
+  }
+}
+
+/* Keyboard focus ring. Jellyfin switches outlines off on its buttons, so the
+   ring is drawn as a shadow: a gap in the page colour, then the accent. */
+.cardImageContainer:focus-visible,
+.cardOverlayButton:focus-visible,
+.textActionButton:focus-visible,
+.sectionTitleTextButton:focus-visible {
+  box-shadow: 0 0 0 var(--ring-width) var(--bg),
+              0 0 0 calc(var(--ring-width) * 2) var(--accent);
+}
+
+/* Badges: hide the unwatched-episode count, keep the watched tick (accent) */
+.card .countIndicator {
+  display: none;
+}
+
+.playedIndicator {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+/* Play button: solid primary instead of a dark circle */
+.cardOverlayContainer > .cardOverlayFab-primary {
+  background-color: var(--primary);
+  color: var(--on-primary);
+}
+
+.cardOverlayContainer > .cardOverlayFab-primary:hover {
+  background-color: var(--primary-hover);
+  color: var(--on-primary);
+  transform: scale(1.1);
+}
+
+/* Home, landscape cards (Continue Watching, Next Up): the whole card is the
+   play button. It is Jellyfin's own play button stretched over the card and
+   made transparent, with a solid circle and play mark in the centre that is
+   always visible. The title and episode links under the card still open the
+   detail pages. */
+.homeSectionsContainer .overflowBackdropCard .cardOverlayContainer {
+  opacity: 1;
+  background: transparent;
+}
+
+.homeSectionsContainer .overflowBackdropCard .cardOverlayContainer > .cardOverlayFab-primary,
+.homeSectionsContainer .overflowBackdropCard .cardOverlayContainer > .cardOverlayFab-primary:hover {
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  border-radius: var(--radius-card);
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  color: var(--on-primary);
+  font-size: 100%;
+  opacity: 1;
+  pointer-events: auto;
+  transform: none;
+  isolation: isolate;            /* keeps the circle behind the play mark */
+}
+
+/* The circle. Drawn as a pseudo-element because Jellyfin locks the icon's own
+   size and background with !important. */
+.homeSectionsContainer .overflowBackdropCard .cardOverlayFab-primary::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  top: 50%;
+  left: 50%;
+  width: 3.6em;
+  height: 3.6em;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: var(--primary);
+}
+
+
+/* --------------------------------------------------------------------------
+   6. DETAIL PAGE — light touch: colours and button hierarchy only
+   -------------------------------------------------------------------------- */
+.itemName {
+  color: var(--text);
+}
+
+/* Action buttons: Play is the one primary button, the rest are plain icons.
+   The :hover states are set too because Jellyfin turns them blue on hover. */
+.detailButton,
+.detailButton:hover {
+  color: var(--text);
+}
+
+.detailButton.btnPlay,
+.detailButton.btnPlay:hover {
+  background: var(--primary);
+  color: var(--on-primary);
+  border-radius: 999px;
+}
+
+.detailButton.btnPlay:hover {
+  background: var(--primary-hover);
+}
+
+.detailButton:focus-visible {
+  box-shadow: 0 0 0 var(--ring-width) var(--bg),
+              0 0 0 calc(var(--ring-width) * 2) var(--accent);
+}
+
+
+/* --------------------------------------------------------------------------
+   7. DETAIL PAGE HERO — HBO Max-style layout: full-width backdrop, logo /
+   title / buttons bottom-left, no poster, Play as a labelled button.
+   Desktop widths only; narrow screens keep Jellyfin's own layout.
+
+   Applies only when the item has a backdrop (Jellyfin adds .withBackdrop to
+   .backgroundContainer) and a visible Play button. Person pages and items
+   without a backdrop, e.g. some collections, keep Jellyfin's own layout.
+   -------------------------------------------------------------------------- */
+@media (min-width: 64em) {
+  body:has(.backgroundContainer.withBackdrop) .itemDetailPage:has(.mainDetailButtons > .btnPlay:not(.hide)) .itemBackdrop {
+    height: 64vh;
+    min-height: 26em;
+  }
+
+  /* Scrim: darker on the left for the text, fading into the page at the bottom */
+  body:has(.backgroundContainer.withBackdrop) .itemDetailPage:has(.mainDetailButtons > .btnPlay:not(.hide)) .itemBackdrop::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(to right, rgb(var(--bg-rgb) / 0.9) 0%, rgb(var(--bg-rgb) / 0.45) 34%, transparent 62%),
+      linear-gradient(to top, var(--bg) 0%, transparent 36%);
+  }
+
+  body:has(.backgroundContainer.withBackdrop) .itemDetailPage:has(.mainDetailButtons > .btnPlay:not(.hide)) .detailImageContainer {
+    display: none;                 /* the large poster */
+  }
+
+  body:has(.backgroundContainer.withBackdrop) .itemDetailPage:has(.mainDetailButtons > .btnPlay:not(.hide)) .detailLogo {
+    left: 3.3%;
+    right: auto;
+    top: calc(64vh - 22em);
+    width: 28vw;
+    max-width: 30em;
+    height: 9em;
+    background-position: left bottom;
+    background-size: contain;
+  }
+
+  body:has(.backgroundContainer.withBackdrop) .itemDetailPage:has(.mainDetailButtons > .btnPlay:not(.hide)) .detailPagePrimaryContainer .detailRibbon {
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-end;
+    gap: 1.1em;
+    height: auto;
+    margin-top: -11.5em;
+    padding-left: 3.3%;
+    background: transparent;
+  }
+
+  body:has(.backgroundContainer.withBackdrop) .itemDetailPage:has(.mainDetailButtons > .btnPlay:not(.hide)) .detailPagePrimaryContainer .detailPagePrimaryContent {
+    padding-left: 3.3%;
+  }
+
+  /* Synopsis: larger and in a shorter line, as the lead text of the page */
+  body:has(.backgroundContainer.withBackdrop) .itemDetailPage:has(.mainDetailButtons > .btnPlay:not(.hide)) .overview {
+    max-width: 46em;
+    font-size: 1.3em;
+    line-height: 1.45;
+  }
+
+  /* Buttons: labelled Play first, then quiet square icon buttons */
+  body:has(.backgroundContainer.withBackdrop) .itemDetailPage:has(.mainDetailButtons > .btnPlay:not(.hide)) .mainDetailButtons {
+    gap: 0.6em;
+    align-items: center;
+  }
+
+  body:has(.backgroundContainer.withBackdrop) .itemDetailPage:has(.mainDetailButtons > .btnPlay:not(.hide)) .detailButton {
+    height: 3em;
+    margin: 0;
+  }
+
+  body:has(.backgroundContainer.withBackdrop) .itemDetailPage:has(.mainDetailButtons > .btnPlay:not(.hide)) .detailButton.btnPlay {
+    display: inline-flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;       /* icon and label centred, equal space either side */
+    min-width: 11em;
+    padding: 0 2em;
+    border-radius: var(--radius-card);
+  }
+
+  /* The play glyph has empty space built into its left side; pull it in */
+  body:has(.backgroundContainer.withBackdrop) .itemDetailPage:has(.mainDetailButtons > .btnPlay:not(.hide)) .detailButton.btnPlay .detailButton-icon {
+    margin-left: -0.25em;
+  }
+
+  /* The label is the button's own tooltip text ("Play" / "Resume"), so it
+     follows Jellyfin's language setting. */
+  body:has(.backgroundContainer.withBackdrop) .itemDetailPage:has(.mainDetailButtons > .btnPlay:not(.hide)) .detailButton.btnPlay::after {
+    content: attr(title);
+    font-weight: 700;
+    font-size: 1.05em;
+    margin-left: 0.4em;
+  }
+
+  body:has(.backgroundContainer.withBackdrop) .itemDetailPage:has(.mainDetailButtons > .btnPlay:not(.hide)) .detailButton:not(.btnPlay) {
+    width: 3em;
+    padding: 0;
+    background: var(--button-quiet);
+    border-radius: var(--radius-card);
+  }
+
+  body:has(.backgroundContainer.withBackdrop) .itemDetailPage:has(.mainDetailButtons > .btnPlay:not(.hide)) .detailButton:not(.btnPlay):hover {
+    background: var(--button-quiet-hover);
+  }
+
+  /* Hidden: Trailer and Shuffle. They are not in the More menu, so this
+     removes them from the page; delete this rule to bring them back. */
+  body:has(.backgroundContainer.withBackdrop) .itemDetailPage:has(.mainDetailButtons > .btnPlay:not(.hide)) .detailButton.btnPlayTrailer,
+  body:has(.backgroundContainer.withBackdrop) .itemDetailPage:has(.mainDetailButtons > .btnPlay:not(.hide)) .detailButton.btnShuffle {
+    display: none;
+  }
+}
+
+
+/* --------------------------------------------------------------------------
+   8. EPISODE CARDS — season page: a grid of cards instead of a tall list.
+   Thumbnail on top (click = play, small play mark bottom-left), then number
+   and title, runtime and rating, three lines of synopsis. Same border and lift
+   on hover as the other cards. Mark played and the menu appear top-right on
+   hover or keyboard focus; favourite and "Ends at" are hidden; the title and
+   synopsis open the episode page.
+   -------------------------------------------------------------------------- */
+@media (min-width: 64em) {
+  .itemDetailPage .vertical-list:has(> .listItem-largeImage) {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(20em, 1fr));
+    gap: 2.2em 1.4em;
+    align-items: start;
+  }
+
+  .itemDetailPage .vertical-list > .listItem-largeImage {
+    overflow: visible;             /* Jellyfin clips list items; the lift needs room */
+    contain: layout style;
+    display: block;
+    position: relative;
+    padding: 0;
+    margin: 0;
+    border: 0;
+    background: transparent;
+  }
+
+  .itemDetailPage .vertical-list > .listItem-largeImage .listItem-content {
+    display: block;
+    overflow: visible;
+  }
+
+  .itemDetailPage .vertical-list > .listItem-largeImage .listItemImage-large {
+    display: block;
+    position: relative;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 9;
+    margin: 0;
+    border-radius: var(--radius-card);
+    background-size: cover;
+    background-position: center;
+    background-color: var(--surface);
+  }
+
+  /* Jellyfin's play button, stretched over the thumbnail */
+  .itemDetailPage .vertical-list > .listItem-largeImage .listItemImageButton {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0.5em;
+    border-radius: var(--radius-card);
+    display: flex;
+    align-items: flex-end;
+    justify-content: flex-start;
+    background: linear-gradient(to top right, rgb(var(--bg-rgb) / 0.6), transparent 35%);
+    color: var(--text);
+    font-size: 100%;
+    opacity: 1;
+    transform: none;
+  }
+
+  .itemDetailPage .vertical-list > .listItem-largeImage .listItemBody {
+    padding: 0.7em 0 0;
+    margin: 0;
+  }
+
+  .itemDetailPage .vertical-list > .listItem-largeImage .listItemBodyText:first-child {
+    color: var(--text);
+    font-size: 1.05em;
+    -webkit-text-stroke: var(--card-title-stroke) currentColor;
+  }
+
+  .itemDetailPage .vertical-list > .listItem-largeImage .listItem-overview {
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    overflow: hidden;
+    margin-top: 0.3em;
+  }
+
+  .itemDetailPage .vertical-list > .listItem-largeImage .listViewUserDataButtons {
+    position: static;              /* its buttons are placed against the card */
+    display: block;
+    margin: 0;
+    padding: 0;
+  }
+
+  /* Mark played and the menu: small round buttons top-right of the thumbnail,
+     shown on hover or keyboard focus */
+  .itemDetailPage .vertical-list > .listItem-largeImage .listViewUserDataButtons > button[is="emby-playstatebutton"],
+  .itemDetailPage .vertical-list > .listItem-largeImage .listViewUserDataButtons > button[data-action="menu"] {
+    position: absolute;
+    top: 0.5em;
+    z-index: 2;
+    width: 2.1em;
+    height: 2.1em;
+    margin: 0;
+    padding: 0;
+    border-radius: 50%;
+    background: rgb(var(--bg-rgb) / 0.5);
+    color: var(--text);
+    opacity: 0;
+    transition: opacity var(--motion-card) var(--ease-card);
+  }
+
+  .itemDetailPage .vertical-list > .listItem-largeImage .listViewUserDataButtons > button[data-action="menu"] {
+    right: 0.5em;
+  }
+
+  .itemDetailPage .vertical-list > .listItem-largeImage .listViewUserDataButtons > button[is="emby-playstatebutton"] {
+    right: 2.95em;
+  }
+
+  .itemDetailPage .vertical-list > .listItem-largeImage:hover .listViewUserDataButtons > button,
+  .itemDetailPage .vertical-list > .listItem-largeImage:focus-within .listViewUserDataButtons > button {
+    opacity: 1;
+  }
+
+  .itemDetailPage .vertical-list > .listItem-largeImage .listViewUserDataButtons > button[is="emby-playstatebutton"]:hover,
+  .itemDetailPage .vertical-list > .listItem-largeImage .listViewUserDataButtons > button[data-action="menu"]:hover {
+    background: rgb(var(--bg-rgb) / 0.75);
+  }
+
+  /* No favourite at episode level */
+  .itemDetailPage .vertical-list > .listItem-largeImage .listViewUserDataButtons > button[is="emby-ratingbutton"] {
+    display: none;
+  }
+
+  /* Jellyfin's Info button is the only link to the episode's own page. It is
+     stretched invisibly over the whole card, underneath the thumbnail and the
+     two round buttons, so clicking the title or synopsis opens the episode. */
+  .itemDetailPage .vertical-list > .listItem-largeImage .listViewUserDataButtons > button[data-action="link"],
+  .itemDetailPage .vertical-list > .listItem-largeImage .listViewUserDataButtons > button[data-action="link"]:hover {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    border-radius: var(--radius-card);
+    background: transparent;
+    color: transparent;
+    opacity: 1;
+    cursor: pointer;
+  }
+
+  .itemDetailPage .vertical-list > .listItem-largeImage .listItemImage-large {
+    z-index: 1;
+  }
+
+  .itemDetailPage .vertical-list > .listItem-largeImage .listItemBody {
+    cursor: pointer;
+  }
+
+  .itemDetailPage .vertical-list > .listItem-largeImage .listViewUserDataButtons > button:focus-visible,
+  .itemDetailPage .vertical-list > .listItem-largeImage .listItemImageButton:focus-visible {
+    box-shadow: 0 0 0 var(--ring-width) var(--bg),
+                0 0 0 calc(var(--ring-width) * 2) var(--accent);
+  }
+
+  .itemDetailPage .vertical-list > .listItem-largeImage .endsAt {
+    display: none;
+  }
+
+  /* Same border as the other cards: faint at rest, bright under the mouse */
+  .itemDetailPage .vertical-list > .listItem-largeImage .listItemImage-large::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border: var(--card-edge-width) solid var(--card-edge);
+    border-radius: var(--radius-card);
+    pointer-events: none;
+    transition: border-color var(--motion-card) var(--ease-card);
+  }
+
+  .itemDetailPage .vertical-list > .listItem-largeImage:hover .listItemImage-large::after {
+    border-color: var(--hover-ring);
+  }
+}
+
+@media (min-width: 64em) and (prefers-reduced-motion: no-preference) {
+  .itemDetailPage .vertical-list > .listItem-largeImage .listItemImage-large {
+    transition: transform var(--motion-card) var(--ease-card);
+  }
+
+  .itemDetailPage .vertical-list > .listItem-largeImage:hover .listItemImage-large {
+    transform: scale(var(--hover-lift));
+  }
+}
+
+
+/* --------------------------------------------------------------------------
+   9. DETAIL PAGE SPACING — tighter vertical rhythm:
+   buttons -> synopsis -> external links -> content. Jellyfin wraps the
+   synopsis in a <p> with its own 1em margins, which is where most of the
+   extra space came from.
+   -------------------------------------------------------------------------- */
+@media (min-width: 64em) {
+  body:has(.backgroundContainer.withBackdrop) .itemDetailPage:has(.mainDetailButtons > .btnPlay:not(.hide)) .detailPagePrimaryContainer .detailPagePrimaryContent {
+    padding-top: 0;
+  }
+
+  body:has(.backgroundContainer.withBackdrop) .itemDetailPage:has(.mainDetailButtons > .btnPlay:not(.hide)) .mainDetailButtons {
+    margin-bottom: 1.1em;
+  }
+
+  body:has(.backgroundContainer.withBackdrop) .itemDetailPage:has(.mainDetailButtons > .btnPlay:not(.hide)) .overview {
+    margin-top: 0;
+    margin-bottom: 0.5em;
+  }
+
+  body:has(.backgroundContainer.withBackdrop) .itemDetailPage:has(.mainDetailButtons > .btnPlay:not(.hide)) .overview p {
+    margin: 0 0 0.6em;
+  }
+
+  body:has(.backgroundContainer.withBackdrop) .itemDetailPage:has(.mainDetailButtons > .btnPlay:not(.hide)) .overview p:last-child {
+    margin-bottom: 0;
+  }
+
+  /* IMDb / TMDB links sit directly under the synopsis */
+  body:has(.backgroundContainer.withBackdrop) .itemDetailPage:has(.mainDetailButtons > .btnPlay:not(.hide)) .itemExternalLinks {
+    margin-top: 0;
+    margin-bottom: 1.8em;
+  }
+
+  /* Episode cards: synopsis right under the runtime line */
+  .itemDetailPage .vertical-list > .listItem-largeImage .listItem-overview {
+    margin-top: 0.25em;
+    padding-top: 0;
+  }
+
+  .itemDetailPage .vertical-list > .listItem-largeImage .listItem-overview * {
+    margin-top: 0;
+  }
+}
+
+
+/* --------------------------------------------------------------------------
+   10. HOME HERO — styles for the banner built by js/home-hero.js.
+   Without that script none of these rules match anything.
+   -------------------------------------------------------------------------- */
+.homeHero {
+  position: relative;
+  height: 78vh;
+  min-height: 30em;
+  margin-top: -48px;             /* slide under the transparent header (48px) */
+  margin-bottom: -1.5em;
+  overflow: hidden;
+}
+
+.homeHero-slide {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  visibility: hidden;            /* keeps hidden slides out of keyboard reach */
+  transition: opacity 500ms var(--ease-card), visibility 0s 500ms;
+}
+
+.homeHero-slide.is-active {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 500ms var(--ease-card);
+}
+
+.homeHero-backdrop {
+  position: absolute;
+  inset: 0;
+  background-color: var(--bg);
+  background-size: cover;
+  background-position: center 20%;
+}
+
+/* Scrim: left for the text, bottom into the page, top for the header */
+.homeHero-backdrop::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(to right, rgb(var(--bg-rgb) / 0.92) 0%, rgb(var(--bg-rgb) / 0.55) 30%, transparent 60%),
+    linear-gradient(to top, var(--bg) 0%, transparent 30%),
+    linear-gradient(to bottom, rgb(var(--bg-rgb) / 0.55) 0%, transparent 14%);
+}
+
+.homeHero-body {
+  position: absolute;
+  left: 3.3%;
+  bottom: 16%;
+  width: min(40em, 44vw);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.9em;
+}
+
+.homeHero-logo {
+  max-width: 26vw;
+  max-height: 9.5em;
+  object-fit: contain;
+  object-position: left bottom;
+}
+
+.homeHero-label {
+  color: var(--text);
+  font-size: 1.05em;
+  font-weight: 700;
+}
+
+.homeHero-facts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.9em;
+  margin-top: -0.4em;
+  color: var(--text-muted);
+}
+
+.homeHero-score {
+  color: var(--text);
+}
+
+.homeHero-age {
+  padding: 0 0.4em;
+  border: 1px solid currentColor;
+  border-radius: 4px;
+  font-size: 0.85em;
+}
+
+.homeHero-plot {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
+  margin: 0;
+  color: var(--text);
+  font-size: 1.25em;
+  line-height: 1.4;
+}
+
+.homeHero-actions {
+  display: flex;
+  gap: 0.6em;
+  margin-top: 0.4em;
+}
+
+.homeHero-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4em;
+  height: 3.2em;
+  padding: 0 2em;
+  border: 0;
+  border-radius: var(--radius-card);
+  background: var(--button-quiet);
+  color: var(--text);
+  font: inherit;
+  font-size: 1.05em;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color var(--motion-fast) ease-out;
+}
+
+.homeHero-button:hover {
+  background: var(--button-quiet-hover);
+}
+
+.homeHero-play {
+  min-width: 11em;
+  background: var(--primary);
+  color: var(--on-primary);
+}
+
+.homeHero-play:hover {
+  background: var(--primary-hover);
+}
+
+.homeHero-arrow {
+  position: absolute;
+  top: 46%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.6em;
+  height: 2.6em;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text);
+  font-size: 1.2em;
+  opacity: 0.7;
+  cursor: pointer;
+  transition: opacity var(--motion-fast) ease-out, background-color var(--motion-fast) ease-out;
+}
+
+.homeHero-arrow:hover {
+  background: var(--button-quiet);
+  opacity: 1;
+}
+
+.homeHero-prev {
+  left: 0.3em;
+}
+
+.homeHero-next {
+  right: 0.3em;
+}
+
+.homeHero-dots {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 9%;
+  display: flex;
+  justify-content: center;
+  gap: 1.4em;
+}
+
+.homeHero-dot {
+  width: 0.7em;
+  height: 0.7em;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgb(var(--text-rgb) / 0.4);
+  cursor: pointer;
+  transition: background-color var(--motion-fast) ease-out;
+}
+
+.homeHero-dot.is-active {
+  background: var(--text);
+}
+
+.homeHero-button:focus-visible,
+.homeHero-arrow:focus-visible,
+.homeHero-dot:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 var(--ring-width) var(--bg),
+              0 0 0 calc(var(--ring-width) * 2) var(--accent);
+}
+
+/* Narrow screens: shorter banner, text across the width, no side arrows */
+@media (max-width: 64em) {
+  .homeHero {
+    height: 62vh;
+    min-height: 24em;
+  }
+
+  .homeHero-body {
+    right: 3.3%;
+    bottom: 14%;
+    width: auto;
+  }
+
+  .homeHero-logo {
+    max-width: 60vw;
+    max-height: 6em;
+  }
+
+  .homeHero-plot {
+    -webkit-line-clamp: 2;
+    font-size: 1.05em;
+  }
+
+  .homeHero-arrow {
+    display: none;
+  }
+
+  .homeHero-dots {
+    bottom: 5%;
+  }
+}
+
+
+/* --------------------------------------------------------------------------
+   11. NAVIGATION BAR — tidy-up: no server name beside the logo, larger
+   labels and icons, SyncPlay and Cast hidden. The bar stays 48px tall,
+   because every page starts 48px from the top.
+   -------------------------------------------------------------------------- */
+
+/* Logo link: hide the server name (it stays in the page for screen readers) */
+.MuiAppBar-root .MuiButton-root[href="#/"] {
+  font-size: 0;
+  min-width: 0;
+}
+
+.MuiAppBar-root .MuiButton-root[href="#/"] .MuiButton-startIcon {
+  margin: 0;
+}
+
+.MuiAppBar-root .MuiButton-root[href="#/"] img {
+  width: var(--nav-logo-size);
+  height: var(--nav-logo-size);
+}
+
+/* Library links */
+.MuiAppBar-root .MuiToolbar-root .MuiButton-root:not([href="#/"]) {
+  margin-left: var(--nav-gap);
+  padding-left: 0.75em;
+  padding-right: 0.75em;
+  font-size: var(--nav-size);
+  font-weight: var(--nav-weight);
+}
+
+.MuiAppBar-root .MuiButton-startIcon > svg.MuiSvgIcon-root {
+  font-size: var(--nav-icon-size);
+}
+
+/* Icons on the right */
+.MuiAppBar-root .MuiIconButton-root svg.MuiSvgIcon-root:not(.MuiAvatar-fallback) {
+  font-size: var(--nav-action-size);
+}
+
+/* Hidden: SyncPlay (watch together) and Cast to Device. Not used in this
+   setup; delete this rule to bring the two buttons back. */
+.MuiAppBar-root .MuiIconButton-root[aria-controls="app-sync-play-menu"],
+.MuiAppBar-root .MuiIconButton-root[aria-controls="app-remote-play-menu"] {
+  display: none;
+}

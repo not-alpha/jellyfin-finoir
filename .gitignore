@@ -1,0 +1,5 @@
+# Working notes, screenshots and reference images stay local
+docs/
+CLAUDE.md
+.DS_Store
+.claude/
