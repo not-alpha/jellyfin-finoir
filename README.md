@@ -51,7 +51,7 @@ small scripts. Each is independent; install only the ones you want.
 
 | Script | What it adds | Asks the server for |
 |---|---|---|
-| `js/home-hero.js` | The hero banner on the home page | Two small item lists per page load, one logo per slide, one backdrop for the current and next slide |
+| `js/home-hero.js` | The hero banner on the home page | Up to three small item lists per page load, one logo per slide, one backdrop for the current and next slide |
 | `js/detail-page.js` | Season count, logo-only titles, "Watch S1 E3" label | The item's details once per page; the episode list on series pages |
 | `js/nav-current.js` | An accent line under the library you are in | Nothing |
 

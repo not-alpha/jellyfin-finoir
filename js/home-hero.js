@@ -11,9 +11,9 @@
    Load it with the JavaScript Injector plugin. Rollback: switch the script
    off in the plugin and reload the page.
 
-   What it asks the server for: two small item lists per page load (the
-   "Featured" lookup and the slides), then one logo per slide and one backdrop
-   for the current and the next slide.
+   What it asks the server for: up to three small item lists per page load
+   (the "Featured" lookup, its items and the newest items), then one logo per
+   slide and one backdrop for the current and the next slide.
    ========================================================================== */
 (function () {
   'use strict';
@@ -33,8 +33,10 @@
   var FIELDS = 'Overview,Genres,CommunityRating,CriticRating,OfficialRating,' +
     'ProductionYear,ChildCount,RunTimeTicks';
 
+  var REVEAL_WAIT_MS = 1200;    /* longest wait for the first backdrop before showing */
+
   var itemsPromise = null;
-  var mounting = false;
+  var noItems = false;          /* the server answered and nothing was usable */
   var timer = null;
 
   function escapeHtml(text) {
@@ -119,12 +121,15 @@
     });
   }
 
+  /* Both lists are asked for at the same time; "Featured" wins when it exists */
   function loadItems() {
     if (!itemsPromise) {
       var api = window.ApiClient;
       var userId = api.getCurrentUserId();
-      itemsPromise = loadFeatured(api, userId).then(function (featured) {
-        return featured || loadNewest(api, userId);
+      itemsPromise = Promise.all([loadFeatured(api, userId), loadNewest(api, userId)]).then(function (lists) {
+        var result = lists[0] || lists[1];
+        noItems = !result.items.length;
+        return result;
       }).catch(function () {
         itemsPromise = null;
         return { label: LABEL, items: [] };
@@ -196,10 +201,8 @@
     row.removeChild(card);
   }
 
-  function build(items, page, label) {
-    var hero = document.createElement('section');
-    hero.id = 'homeHero';
-    hero.className = 'homeHero';
+  /* Fills the placeholder put in by mount() and fades it in */
+  function build(hero, items, page, label) {
     hero.setAttribute('aria-roledescription', 'carousel');
     hero.setAttribute('aria-label', label);
 
@@ -300,11 +303,38 @@
 
     show(0);
     start();
-    return hero;
+
+    /* Fade in once the first backdrop has arrived, or after a short wait */
+    var revealed = false;
+    function reveal() {
+      if (!revealed) {
+        revealed = true;
+        hero.classList.remove('is-loading');
+      }
+    }
+    var first = new Image();
+    first.onload = reveal;
+    first.onerror = reveal;
+    first.src = imageUrl(items[0], 'Backdrop', backdropWidth);
+    window.setTimeout(reveal, REVEAL_WAIT_MS);
   }
 
-  /* Puts the hero above the home rows. Returns true once it is in place. */
+  function signedIn() {
+    var api = window.ApiClient;
+    return !!(api && api.getCurrentUserId());
+  }
+
+  /* Puts the hero above the home rows: first an empty block of the final
+     size, so the rows never move, then the slides once the server has
+     answered. Returns true once nothing is left to do. */
   function mount() {
+    if (noItems) {
+      return true;
+    }
+    /* Ask the server early, while Jellyfin is still building the home page */
+    if (signedIn() && /^#\/home/.test(window.location.hash)) {
+      loadItems();
+    }
     var page = document.querySelector('#indexPage:not(.hide)');
     if (!page) {
       return false;
@@ -313,31 +343,39 @@
       return true;
     }
     var rows = page.querySelector('.homeSectionsContainer');
-    var api = window.ApiClient;
-    if (!rows || !api || !api.getCurrentUserId() || mounting) {
+    if (!rows || !signedIn()) {
       return false;
     }
-    mounting = true;
+    var hero = document.createElement('section');
+    hero.id = 'homeHero';
+    hero.className = 'homeHero is-loading';
+    rows.parentElement.insertBefore(hero, rows);
     loadItems().then(function (result) {
-      mounting = false;
-      if (!result.items.length || !rows.isConnected || page.querySelector('#homeHero')) {
+      if (!hero.isConnected) {
         return;
       }
-      rows.parentElement.insertBefore(build(result.items, page, result.label), rows);
+      if (!result.items.length) {
+        hero.remove();
+        return;
+      }
+      build(hero, result.items, page, result.label);
     });
-    return false;
+    return true;
   }
 
   /* The home page is built after this script runs and rebuilt when coming
      back to it, so try for a few seconds after every page change. */
   function scheduleMount() {
+    if (mount()) {
+      return;
+    }
     var tries = 0;
     var id = window.setInterval(function () {
       tries += 1;
-      if (mount() || tries >= 20) {
+      if (mount() || tries >= 100) {
         window.clearInterval(id);
       }
-    }, 500);
+    }, 100);
   }
 
   window.addEventListener('hashchange', scheduleMount);

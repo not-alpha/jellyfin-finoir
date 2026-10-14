@@ -71,6 +71,9 @@
   --nav-logo-size: 32px;
   --nav-action-size: 24px;     /* icons on the right */
   --nav-gap: 12px;            /* extra space between library links */
+
+  /* Detail page */
+  --detail-backdrop-veil: 0.6; /* page colour over the backdrop; Jellyfin's own is 0.86 */
 }
 
 
@@ -378,6 +381,11 @@
   body:has(.backgroundContainer.withBackdrop) .itemDetailPage:has(.mainDetailButtons > .btnPlay:not(.hide)) .itemBackdrop {
     height: 64vh;
     min-height: 26em;
+  }
+
+  /* Jellyfin lays the page colour over the backdrop; lighten it so the image shows */
+  body:has(.itemDetailPage:not(.hide) .mainDetailButtons > .btnPlay:not(.hide)) .backgroundContainer.withBackdrop {
+    opacity: var(--detail-backdrop-veil);
   }
 
   /* Scrim: darker on the left for the text, fading into the page at the bottom */
@@ -735,6 +743,13 @@
   margin-top: -48px;             /* slide under the transparent header (48px) */
   margin-bottom: -1.5em;
   overflow: hidden;
+  transition: opacity 200ms ease-out;
+}
+
+/* Empty and invisible while the script waits for the server; it already has
+   its final size, so the rows below do not move when the slides arrive */
+.homeHero.is-loading {
+  opacity: 0;
 }
 
 .homeHero-slide {
